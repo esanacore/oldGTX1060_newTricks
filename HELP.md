@@ -6,7 +6,7 @@ This file provides help for humans and AI agents working on this project.
 
 - **Primary Maintainer**: [esanacore](https://github.com/esanacore) — single-operator personal infrastructure project.
 - **Getting Started**: Read `README.md` and `docs/SETUP.md`.
-- **Asking for Help**: [Open an issue](https://github.com/esanacore/gtx1060-vfio-inference-vm/issues) on this repository.
+- **Asking for Help**: [Open an issue](https://github.com/esanacore/oldGTX1060_newTricks/issues) on this repository.
 
 ## For AI Agents
 

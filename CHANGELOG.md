@@ -73,5 +73,5 @@ This project follows semantic versioning.
   tracking, backup strategy, verification-script scheduling) rather than
   the original constitution-bootstrap placeholders.
 
-[1.1.0]: https://github.com/esanacore/gtx1060-vfio-inference-vm/releases/tag/v1.1.0
-[1.0.0]: https://github.com/esanacore/gtx1060-vfio-inference-vm/releases/tag/v1.0.0
+[1.1.0]: https://github.com/esanacore/oldGTX1060_newTricks/releases/tag/v1.1.0
+[1.0.0]: https://github.com/esanacore/oldGTX1060_newTricks/releases/tag/v1.0.0
