@@ -1,0 +1,22 @@
+flowchart TD
+    subgraph Host["Host: Murderbot"]
+        direction TB
+        RTX["RTX 4080<br/>nvidia driver 595.x<br/>(untouched throughout)"]
+        Bind["GTX 1060 + HDMI audio<br/>bound to vfio-pci at boot"]
+    end
+
+    KVM["KVM / QEMU / libvirt<br/>PCI hostdev passthrough"]
+
+    subgraph Guest["Guest VM: art"]
+        direction TB
+        GTX["GTX 1060<br/>nvidia driver 580.xx Legacy"]
+        Runtime["Docker CE +<br/>nvidia-container-toolkit"]
+        App["GPU containers<br/>local LLM inference"]
+    end
+
+    Bind --> KVM --> GTX --> Runtime --> App
+
+    classDef hostNode fill:#eaf2fc,stroke:#2a78d6,stroke-width:1px,color:#0b0b0b
+    classDef guestNode fill:#e6f7f1,stroke:#1baf7a,stroke-width:1px,color:#0b0b0b
+    class RTX,Bind hostNode
+    class GTX,Runtime,App guestNode

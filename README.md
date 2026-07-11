@@ -4,16 +4,65 @@
 [![Eric's Engineering Constitution](https://img.shields.io/badge/Eric's%20Engineering%20Constitution-Adopted-blue)](https://github.com/esanacore/engineering-constitution)
 <!-- CONSTITUTION_END -->
 
-Documentation for turning a second, driver-incompatible GPU (GTX 1060) into a
-usable local-inference box, without touching the host's primary GPU (RTX 4080)
-or its driver branch.
+Documentation, reference configs, and verification tooling for turning a
+second, driver-incompatible GPU (GTX 1060) into a usable local-inference
+box — without touching the host's primary GPU (RTX 4080) or its driver
+branch.
 
-**Host:** `Murderbot` — Ubuntu, RTX 4080 on the NVIDIA 595.x (current) driver branch.
-**Guest VM:** `art` (libvirt domain name `gtx1060-inference`) — Ubuntu, GTX 1060
-passed through via VFIO, running Docker + nvidia-container-toolkit for
+**Host:** `Murderbot` — Ubuntu, RTX 4080 on the NVIDIA 595.x (current) driver
+branch.
+**Guest VM:** `art` (libvirt domain name `gtx1060-inference`) — Ubuntu, GTX
+1060 passed through via VFIO, running Docker + nvidia-container-toolkit for
 containerized local LLM inference.
 
-## Why a VM instead of driver downgrade or plain Docker-on-host
+## Who This Is For
+
+Primarily an operational reference for this specific machine — the
+authoritative record of how `Murderbot`/`art` are configured, so future
+changes have a known-good baseline to diff against (see `scripts/`).
+Secondarily, a worked example for anyone hitting the same underlying
+problem: two NVIDIA GPUs on one host that each require a different,
+mutually-incompatible driver branch.
+
+## Project Structure
+
+```text
+.
+├── README.md              # you are here — overview, diagram, quick reference
+├── VERSION                 # current release version (single source of truth)
+├── CHANGELOG.md            # user-facing changes by release
+├── TODO.md                 # living roadmap / known follow-up work
+├── docs/
+│   ├── 01-diagnosis.md            # narrative: why the 1060 was invisible
+│   ├── 02-host-vfio-setup.md      # narrative: host IOMMU/vfio-pci setup
+│   ├── 03-vm-provisioning.md      # narrative: building the art VM
+│   ├── 04-guest-driver-docker-gpu.md  # narrative: guest driver/Docker/toolkit
+│   ├── 05-incident-ollama-crashloop.md # unrelated incident found + fixed
+│   ├── 06-incident-wayland-gpu-hang.md # unrelated incident found + fixed
+│   ├── adr/                       # architecture decision records
+│   ├── ARCHITECTURE.md            # system overview + component diagram
+│   ├── SETUP.md                   # governance-standard setup index
+│   ├── OPERATIONS.md              # deployment/monitoring/incident response
+│   ├── COMMAND_REFERENCE.md       # quick command lookup
+│   ├── TROUBLESHOOTING.md         # known issues and fixes
+│   ├── TEST_PLAN.md               # what "tested" means for this repo
+│   ├── AGENT_PROMPTS.md           # copyable prompts for AI agents
+│   └── AGENT_HANDOFF.md           # session handoff template
+├── configs/
+│   ├── host/               # actual host files: grub, modprobe.d, fstab, ollama.service
+│   └── vm/                 # actual libvirt domain XML for the art VM
+├── scripts/                # drift-detection + end-to-end verification tooling
+├── assets/diagrams/         # Mermaid source + rendered SVG for the diagram below
+└── constitution/            # Eric's Engineering Constitution (submodule)
+```
+
+## How It Works
+
+![Diagram: host GPU stays on its own driver; the second GPU is bound to vfio-pci at boot and passed through to the art VM, which runs its own NVIDIA driver, Docker, and nvidia-container-toolkit](assets/diagrams/how-it-works.svg)
+
+Full component/data-flow diagram: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md#component-diagram).
+
+## Why a VM Instead of a Driver Downgrade or Plain Docker-on-Host
 
 - The GTX 1060 (Pascal, GP106) is not supported by the 595.x driver branch —
   only the 580.xx Legacy branch. The RTX 4080 (Ada) works on either.
@@ -24,7 +73,57 @@ containerized local LLM inference.
 - A VM does get its own kernel + driver stack, so the 1060 can run the 580.xx
   Legacy driver independently of whatever the host is running.
 
-## Contents
+Full reasoning and alternatives considered:
+[`docs/adr/0001-vfio-passthrough-vm-over-driver-downgrade.md`](docs/adr/0001-vfio-passthrough-vm-over-driver-downgrade.md).
+
+## Current Capabilities
+
+What this setup can actually do today:
+
+- GTX 1060 passed through to a dedicated VM, fully independent of the
+  host's RTX 4080 and its driver branch — zero shared kernel driver state
+  between the two.
+- Guest runs the NVIDIA 580.xx Legacy driver (Pascal support), verified
+  working via `nvidia-smi`.
+- Docker CE (apt, not snap) + `nvidia-container-toolkit` installed and
+  configured inside the guest — any `docker run --gpus all ...` workload
+  gets the GTX 1060.
+- End-to-end verified: `docker run --rm --gpus all
+  nvidia/cuda:12.6.0-base-ubuntu24.04 nvidia-smi` succeeds inside the guest.
+- Automated drift detection for both the host config and the VM's libvirt
+  domain definition (`scripts/check-host-config.sh`,
+  `scripts/check-vm-config.sh`), plus a one-command end-to-end health check
+  (`scripts/verify-gpu-stack.sh`) — see `scripts/README.md`.
+- Two unrelated host issues found and fixed along the way, documented as
+  incidents rather than silently patched: a pre-existing `ollama.service`
+  crash loop, and a GNOME/Wayland + NVIDIA cursor-plane bug causing host
+  hard-hangs.
+
+Not yet done — see `TODO.md`:
+
+- No real inference workload has been containerized against the 1060 yet
+  (Ollama/vLLM/etc.) — the verification so far is a generic CUDA container.
+- No backup strategy for the VM's disk (raw passthrough of a physical SSD).
+- Secure Boot is disabled in the guest rather than using MOK enrollment
+  (see `docs/adr/0002-disable-secure-boot-in-guest.md`) — acceptable for now,
+  revisit if the VM's threat model changes.
+
+## Getting Started
+
+- **Set up this exact configuration on this exact machine**: follow
+  [`docs/SETUP.md`](docs/SETUP.md), which indexes the full procedure across
+  `docs/01`–`04`.
+- **Operate the already-built VM**: [`docs/COMMAND_REFERENCE.md`](docs/COMMAND_REFERENCE.md)
+  and [`scripts/`](scripts/README.md).
+- **Verify it's still working**: `./scripts/verify-gpu-stack.sh` — see
+  [`docs/TEST_PLAN.md`](docs/TEST_PLAN.md) for what "tested" means for a
+  repository with no application code.
+- **Something's broken**: [`docs/TROUBLESHOOTING.md`](docs/TROUBLESHOOTING.md)
+  covers every issue actually hit so far.
+- **Contribute or work with an AI agent here**: [`CONTRIBUTING.md`](CONTRIBUTING.md),
+  [`AGENTS.md`](AGENTS.md), and [`docs/AGENT_PROMPTS.md`](docs/AGENT_PROMPTS.md).
+
+## Documentation Index
 
 - [`docs/01-diagnosis.md`](docs/01-diagnosis.md) — why the 1060 wasn't showing
   up in `nvidia-smi`, and why VFIO was chosen over alternatives.
@@ -41,12 +140,12 @@ containerized local LLM inference.
 - [`docs/06-incident-wayland-gpu-hang.md`](docs/06-incident-wayland-gpu-hang.md) —
   a host desktop hard-hang bug (GNOME/Wayland + NVIDIA cursor-plane) found and
   worked around during this project.
+- [`docs/adr/`](docs/adr/README.md) — architecture decision records, indexed.
 - [`configs/`](configs/) — the actual config files/snippets referenced by the
   docs above (host modprobe.d, GRUB cmdline, fstab entry, ollama.service, the
   full libvirt domain XML).
-- [`docs/adr/0001-...`](docs/adr/0001-vfio-passthrough-vm-over-driver-downgrade.md) —
-  the architecture decision record for choosing VFIO passthrough over a
-  driver downgrade or host-level Docker.
+- [`scripts/`](scripts/README.md) — drift-detection and end-to-end
+  verification tooling.
 
 This repository follows [Eric's Engineering Constitution](https://github.com/esanacore/engineering-constitution)
 (see `constitution/`); `docs/SETUP.md`, `docs/OPERATIONS.md`,
@@ -54,7 +153,7 @@ This repository follows [Eric's Engineering Constitution](https://github.com/esa
 governance-standard operational docs, layered on top of the narrative docs
 above.
 
-## Quick reference: current end state
+## Quick Reference: Current End State
 
 | Component | Value |
 |---|---|
@@ -64,4 +163,9 @@ above.
 | VM disk | raw passthrough of `/dev/sdc` (repurposed physical SSD) |
 | VM firmware | OVMF UEFI, Secure Boot **disabled** (see provisioning doc) |
 | Guest container runtime | Docker CE 29.x (apt) + nvidia-container-toolkit 1.19.x |
-| Verified via | `docker run --rm --gpus all nvidia/cuda:12.6.0-base-ubuntu24.04 nvidia-smi` inside the VM |
+| Verified via | `./scripts/verify-gpu-stack.sh` |
+
+## Version
+
+Current version: 1.0.0 — see [`VERSION`](VERSION) and
+[`CHANGELOG.md`](CHANGELOG.md).

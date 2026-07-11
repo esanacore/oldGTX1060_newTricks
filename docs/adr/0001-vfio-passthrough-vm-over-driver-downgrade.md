@@ -8,7 +8,8 @@ Date: 2026-07-10
 
 - Extends: none
 - Supersedes: none
-- Related: none
+- Related: [`0002-disable-secure-boot-in-guest.md`](0002-disable-secure-boot-in-guest.md)
+  (a consequence of provisioning the VM this decision established)
 
 ## Context
 

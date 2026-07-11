@@ -59,6 +59,17 @@ journalctl -b <offset> | grep -iE "suspend|resume"
 journalctl | grep drmModeAtomicCommit
 ```
 
+## Automated Verification Scripts
+
+The commands above are also wrapped in `scripts/` for one-shot checks — see
+`scripts/README.md`:
+
+```bash
+./scripts/check-host-config.sh   # host config files vs configs/host/
+./scripts/check-vm-config.sh     # live VM domain XML vs configs/vm/
+./scripts/verify-gpu-stack.sh    # end-to-end: nvidia-smi + docker --gpus all
+```
+
 ## Rebuilding the VM Domain from Scratch
 
 See `docs/03-vm-provisioning.md` for the full procedure, including the

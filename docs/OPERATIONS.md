@@ -24,6 +24,12 @@ Operational procedures for the `art` VM (libvirt domain `gtx1060-inference`).
   1060) is the primary health signal — GPU visible, temps/power sane, no
   stuck processes.
 - **Alerts**: None automated. This is a manually-operated personal system.
+- **Routine verification**: run `scripts/check-host-config.sh`,
+  `scripts/check-vm-config.sh`, and `scripts/verify-gpu-stack.sh` (see
+  `scripts/README.md`) after any host kernel/driver update, any live
+  `virsh edit`/`virt-xml` change, or whenever something feels off. They're
+  the fastest way to tell "config drifted from what's documented" apart from
+  "the stack actually broke."
 
 ## Safe Operations
 
@@ -47,13 +53,17 @@ Operational procedures for the `art` VM (libvirt domain `gtx1060-inference`).
 1. Identify whether the issue is host-side (e.g. full system hang,
    `nvidia-smi` missing the 1060 on the host boot) or guest-side (e.g.
    `nvidia-smi`/Docker GPU access failing inside `art`).
-2. Check `journalctl` (host or guest as appropriate) for the known failure
+2. Run `scripts/check-host-config.sh` and `scripts/check-vm-config.sh` first
+   — rule out config drift before assuming something is actually broken.
+3. Check `journalctl` (host or guest as appropriate) for the known failure
    signatures documented in `docs/TROUBLESHOOTING.md` first — most issues
    hit so far have matched one of those.
-3. For host hangs specifically: never attempt a live PCI rebind as a fix.
+4. For host hangs specifically: never attempt a live PCI rebind as a fix.
    Reboot and let the boot-time `modprobe.d`/`initramfs` config re-bind
    `vfio-pci` cleanly.
-4. If root cause isn't one of the known issues, capture `journalctl
+5. If root cause isn't one of the known issues, capture `journalctl
    --list-boots` and the relevant boot's full log before rebooting/resetting
    — the evidence disappears once the journal rotates or the hang requires a
    hard reset.
+6. Once resolved, run `scripts/verify-gpu-stack.sh` to confirm the full
+   stack is actually functional again, not just that the config matches.
