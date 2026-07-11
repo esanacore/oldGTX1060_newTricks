@@ -26,6 +26,17 @@ Keep entries specific, actionable, and current.
       doing — depends on how often non-Murderbot devices actually need
       this.
 
+- [ ] Root-cause the Open WebUI tool-call hallucination bug — chat prompts
+      sometimes return raw fake tool-call JSON instead of answers. Direct
+      Ollama `curl` calls are clean, so Open WebUI itself is injecting the
+      trigger; every Workspace-level tool-attachment surface has been ruled
+      out. Next steps: try the "Function Calling" Advanced Param's
+      Native/Legacy states (currently Default), check Admin Panel → Settings
+      for an instance-wide default, and inspect the actual
+      `POST /api/chat/completions` body via browser DevTools → Network. See
+      `docs/TROUBLESHOOTING.md`, "Open WebUI returns hallucinated tool-call
+      JSON instead of answers".
+
 ## Technical Debt
 
 - [ ] MOK enrollment was skipped in favor of disabling Secure Boot in the

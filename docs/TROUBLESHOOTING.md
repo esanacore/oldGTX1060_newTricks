@@ -59,6 +59,33 @@ they were resolved. See the linked docs for full detail on each.
   Unrelated to the GPU/VM work — a pre-existing bug found along the way.
 - **Fix**: See `docs/05-incident-ollama-crashloop.md`.
 
+## Known Issue (unresolved): Open WebUI returns hallucinated tool-call JSON instead of answers
+
+- **Symptoms**: Ordinary factual prompts (e.g. "Why does low tide smell")
+  sometimes return a raw, fabricated tool-call object instead of a natural-
+  language answer — for example
+  `{"name": "search_calendar_events", "arguments": {"query": "low tide smell"}}`.
+  No such tool exists or was ever registered.
+- **Ruled out so far**: `format (Ollama)` Advanced Param is "Default", not
+  forced to `json`; the per-message "Code Interpreter" tool toggle is off;
+  Workspace → Models has no profile for `qwen2.5-coder:7b` (it's connection-
+  auto-detected, so there's no per-model Tools attachment to check);
+  Workspace → Tools (the instance-wide custom-tools registry) is empty.
+  Sending the identical prompt directly to Ollama's `/api/chat` via `curl`
+  (bypassing Open WebUI entirely) returns a clean, correct answer with no
+  tool-call artifacts — this proves the model and Ollama are not at fault;
+  Open WebUI is injecting something (almost certainly a `tools`/functions
+  schema) into its outgoing request that isn't present in a bare Ollama call.
+- **Not yet checked**: the "Function Calling" Advanced Param cycles
+  Default → Native → Legacy with no explicit off state — never actually
+  toggled away from Default to compare behavior; Admin Panel → Settings
+  (global/instance-level, distinct from the per-user Workspace settings
+  checked above) hasn't been inspected for a default Function Calling / web
+  search / tool-autouse setting; the literal outgoing
+  `POST /api/chat/completions` body (via browser DevTools → Network) has not
+  been inspected to confirm whether a `tools` field is actually present.
+- **Fix**: not yet found. See `TODO.md`.
+
 ## Environment Reset (VM)
 
 If the guest ends up in a broken state after driver/firmware experimentation:
