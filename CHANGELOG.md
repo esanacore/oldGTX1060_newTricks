@@ -21,6 +21,14 @@ This project follows semantic versioning.
 
 ### Fixed
 
+- Open WebUI was hallucinating fake tool calls (e.g. `{"name":
+  "get_random_fact", "arguments": {}}`) instead of answering ordinary
+  prompts. Caused by the default/native Function Calling mode sending an
+  empty `tools` field that `qwen2.5-coder`'s chat template reacts to
+  regardless of content. Fixed instance-wide by setting the default
+  Function Calling mode to Legacy in Admin Panel → Settings. See
+  `docs/TROUBLESHOOTING.md`.
+
 ### Removed
 
 ### Security

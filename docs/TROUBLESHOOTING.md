@@ -59,32 +59,36 @@ they were resolved. See the linked docs for full detail on each.
   Unrelated to the GPU/VM work — a pre-existing bug found along the way.
 - **Fix**: See `docs/05-incident-ollama-crashloop.md`.
 
-## Known Issue (unresolved): Open WebUI returns hallucinated tool-call JSON instead of answers
+## Issue: Open WebUI returns hallucinated tool-call JSON instead of answers
 
-- **Symptoms**: Ordinary factual prompts (e.g. "Why does low tide smell")
-  sometimes return a raw, fabricated tool-call object instead of a natural-
-  language answer — for example
-  `{"name": "search_calendar_events", "arguments": {"query": "low tide smell"}}`.
-  No such tool exists or was ever registered.
-- **Ruled out so far**: `format (Ollama)` Advanced Param is "Default", not
-  forced to `json`; the per-message "Code Interpreter" tool toggle is off;
-  Workspace → Models has no profile for `qwen2.5-coder:7b` (it's connection-
-  auto-detected, so there's no per-model Tools attachment to check);
-  Workspace → Tools (the instance-wide custom-tools registry) is empty.
-  Sending the identical prompt directly to Ollama's `/api/chat` via `curl`
-  (bypassing Open WebUI entirely) returns a clean, correct answer with no
-  tool-call artifacts — this proves the model and Ollama are not at fault;
-  Open WebUI is injecting something (almost certainly a `tools`/functions
-  schema) into its outgoing request that isn't present in a bare Ollama call.
-- **Not yet checked**: the "Function Calling" Advanced Param cycles
-  Default → Native → Legacy with no explicit off state — never actually
-  toggled away from Default to compare behavior; Admin Panel → Settings
-  (global/instance-level, distinct from the per-user Workspace settings
-  checked above) hasn't been inspected for a default Function Calling / web
-  search / tool-autouse setting; the literal outgoing
-  `POST /api/chat/completions` body (via browser DevTools → Network) has not
-  been inspected to confirm whether a `tools` field is actually present.
-- **Fix**: not yet found. See `TODO.md`.
+- **Symptoms**: Ordinary factual prompts (e.g. "Why does low tide smell",
+  "Tell me a random fun fact about the Roman Empire") returned a raw,
+  fabricated tool-call object instead of a natural-language answer — for
+  example `{"name": "search_calendar_events", "arguments": {"query": "low
+  tide smell"}}` or `{"name": "get_random_fact", "arguments": {}}`. No such
+  tools exist or were ever registered.
+- **Ruled out**: `format (Ollama)` Advanced Param at "Default" (not forced
+  to `json`); the per-message "Code Interpreter" toggle (off); Workspace →
+  Models (no profile existed for `qwen2.5-coder:7b` — it was connection-
+  auto-detected, so there was no per-model Tools attachment); Workspace →
+  Tools, the instance-wide custom-tools registry (empty). Sending the
+  identical prompt directly to Ollama's `/api/chat` via `curl` (bypassing
+  Open WebUI) returned a clean, correct answer every time — proving the
+  model and Ollama were not at fault.
+- **Cause**: Open WebUI's "Function Calling" Advanced Param defaults to
+  Ollama-native tool-calling. In that mode Open WebUI includes a `tools`
+  field in its request to Ollama even when zero tools are actually
+  attached (an empty list, not an absent field). `qwen2.5-coder`'s chat
+  template checks whether `tools` is *present* in the request, not whether
+  it's non-empty — so the mere presence of that key was enough to switch
+  the model into tool-call output mode, and with no real tool matching the
+  prompt, it fabricated one.
+- **Fix**: Admin Panel → Settings → set the default **Function Calling**
+  to **Legacy** instead of the native/default mode. Legacy mode doesn't
+  pass a native `tools` field through to Ollama, so the model no longer
+  sees anything that triggers its tool-call template. Confirmed fixed
+  instance-wide (Admin Panel setting, not a per-chat toggle) — verified
+  with the same prompts that previously failed.
 
 ## Environment Reset (VM)
 
