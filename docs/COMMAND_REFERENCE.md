@@ -42,6 +42,56 @@ sudo docker run --rm --gpus all nvidia/cuda:12.6.0-base-ubuntu24.04 nvidia-smi
 Confirms the full stack end-to-end: driver → `nvidia-container-toolkit` →
 Docker → container.
 
+## Inference Workload (Ollama)
+
+A persistent `ollama/ollama` container runs on the guest with model storage
+bind-mounted to `/srv/ai/ollama-models` — on the dedicated passthrough disk,
+not Docker's opaque volume store, so it's easy to find, inspect, or back up
+independently of the container's lifecycle.
+
+```bash
+# Start (already running with --restart unless-stopped; only needed after
+# removing the container or rebuilding the VM):
+sudo docker run -d --gpus all \
+  -v /srv/ai/ollama-models:/root/.ollama \
+  -p 11434:11434 --name ollama --restart unless-stopped ollama/ollama
+
+# Pull a model
+sudo docker exec ollama ollama pull qwen2.5-coder:7b
+
+# Confirm it's actually on the GPU (not split with CPU)
+sudo docker exec ollama ollama ps
+
+# Run a prompt (CLI)
+sudo docker exec ollama ollama run qwen2.5-coder:7b "your prompt here"
+
+# Or via the HTTP API (cleaner output, includes timing/perf stats)
+curl -s http://localhost:11434/api/generate -d '{
+  "model": "qwen2.5-coder:7b",
+  "prompt": "your prompt here",
+  "stream": false
+}'
+```
+
+### Accessing It
+
+- **From Murderbot itself**: point any Ollama-compatible client (CLI, IDE
+  plugin, Open WebUI, etc.) at `http://192.168.122.27:11434` directly — the
+  host can reach the VM's libvirt NAT IP natively, no extra setup.
+- **From another device on the LAN**: not reachable yet — libvirt's
+  `default` network is NAT'd behind the host. For occasional use, tunnel
+  through the host via SSH:
+
+  ```bash
+  ssh -L 11435:192.168.122.27:11434 esanacore@<murderbot-lan-ip>
+  # then on the client machine:
+  curl http://localhost:11435/api/tags
+  ```
+
+  A persistent port-forward (so other LAN devices can reach it without a
+  tunnel) is tracked in `TODO.md` rather than done by default, since it's a
+  host firewall/NAT change.
+
 ## Host-Side Diagnostics
 
 ```bash

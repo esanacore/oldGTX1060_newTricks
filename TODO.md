@@ -6,10 +6,25 @@ Keep entries specific, actionable, and current.
 
 ## Features
 
-- [ ] Containerize a real inference workload on the `art` VM (e.g. Ollama or
-      vLLM via `docker run --gpus all`) and document the compose/run command
-      as the reference example — verification so far only used a generic
-      CUDA test image.
+- [x] ~~Containerize a real inference workload~~ — done: an `ollama/ollama`
+      container runs on the `art` VM with `--gpus all`, model storage
+      bind-mounted to `/srv/ai/ollama-models` on the dedicated passthrough
+      disk. `qwen2.5-coder:7b` verified running 100% on GPU at ~24
+      tokens/sec. See `docs/COMMAND_REFERENCE.md`, "Inference Workload
+      (Ollama)".
+- [ ] Add a persistent LAN port-forward so other devices on the network can
+      reach the GTX 1060's Ollama endpoint directly, not just Murderbot
+      itself. Plan: forward Murderbot's real LAN IP, port 11435 →
+      `192.168.122.27:11434`, mirroring the one-port-per-GPU convention
+      already used in GPU4HIRE_AI (11434/11435 for its two A4000 workers).
+      Touches host firewall/NAT config — a small, reversible, LAN-only
+      change, deferred until actually needed.
+- [ ] Revisit whether an on-demand SSH tunnel
+      (`ssh -L 11435:192.168.122.27:11434 esanacore@<murderbot-lan-ip>`,
+      already documented in `docs/COMMAND_REFERENCE.md`) is sufficient
+      long-term, or whether the persistent port-forward above is worth
+      doing — depends on how often non-Murderbot devices actually need
+      this.
 
 ## Technical Debt
 

@@ -90,6 +90,13 @@ What this setup can actually do today:
   gets the GTX 1060.
 - End-to-end verified: `docker run --rm --gpus all
   nvidia/cuda:12.6.0-base-ubuntu24.04 nvidia-smi` succeeds inside the guest.
+- A real inference workload is running: a persistent `ollama/ollama`
+  container (`--restart unless-stopped`) with `qwen2.5-coder:7b` loaded,
+  100% GPU-offloaded, ~24 tokens/sec. Model storage lives at
+  `/srv/ai/ollama-models` on the dedicated passthrough disk, not Docker's
+  opaque volume store. Reachable from Murderbot at
+  `http://192.168.122.27:11434`. See `docs/COMMAND_REFERENCE.md`,
+  "Inference Workload (Ollama)".
 - Automated drift detection for both the host config and the VM's libvirt
   domain definition (`scripts/check-host-config.sh`,
   `scripts/check-vm-config.sh`), plus a one-command end-to-end health check
@@ -101,8 +108,8 @@ What this setup can actually do today:
 
 Not yet done — see `TODO.md`:
 
-- No real inference workload has been containerized against the 1060 yet
-  (Ollama/vLLM/etc.) — the verification so far is a generic CUDA container.
+- No persistent LAN access to the inference endpoint — only Murderbot
+  itself can reach it right now; other devices need an SSH tunnel.
 - No backup strategy for the VM's disk (raw passthrough of a physical SSD).
 - Secure Boot is disabled in the guest rather than using MOK enrollment
   (see `docs/adr/0002-disable-secure-boot-in-guest.md`) — acceptable for now,
@@ -163,6 +170,9 @@ above.
 | VM disk | raw passthrough of `/dev/sdc` (repurposed physical SSD) |
 | VM firmware | OVMF UEFI, Secure Boot **disabled** (see provisioning doc) |
 | Guest container runtime | Docker CE 29.x (apt) + nvidia-container-toolkit 1.19.x |
+| Running workload | `ollama/ollama` + `qwen2.5-coder:7b`, 100% GPU, ~24 tok/s |
+| Model storage | `/srv/ai/ollama-models` on the passthrough disk |
+| Inference endpoint | `http://192.168.122.27:11434` (Murderbot-only for now) |
 | Verified via | `./scripts/verify-gpu-stack.sh` |
 
 ## Version

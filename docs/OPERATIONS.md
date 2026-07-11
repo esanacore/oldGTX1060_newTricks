@@ -9,7 +9,10 @@ Operational procedures for the `art` VM (libvirt domain `gtx1060-inference`).
   inference box.
 - **Deployment Procedure**: There's no application deploy pipeline here.
   "Deployment" means provisioning or re-provisioning the VM itself — see
-  `docs/03-vm-provisioning.md` and `docs/SETUP.md`.
+  `docs/03-vm-provisioning.md` and `docs/SETUP.md`. The one long-running
+  workload is a `docker run -d --restart unless-stopped` Ollama container
+  inside the guest (see `docs/COMMAND_REFERENCE.md`, "Inference Workload");
+  it survives VM reboots on its own, no separate deploy step needed.
 - **Approvals / Gates**: None — single-operator system.
 - **Rollback**: The reference domain XML
   (`configs/vm/gtx1060-inference-domain.xml`) is the known-good end state.
@@ -36,10 +39,12 @@ Operational procedures for the `art` VM (libvirt domain `gtx1060-inference`).
 - **Backup/Restore**: The VM's disk is a raw passthrough of a physical SSD
   (`/dev/sdc`), not a snapshot-friendly qcow2 file. There is currently no
   backup of its contents — treat it as disposable/rebuildable rather than
-  data you'd restore. Do not `mount` or otherwise touch `/dev/sdc` from the
-  host while the VM is running (see the passthrough caution in
-  `docs/03-vm-provisioning.md`) — concurrent access can corrupt the guest
-  filesystem.
+  data you'd restore. This includes `/srv/ai/ollama-models`: models are
+  re-pullable from the Ollama registry, so losing that directory is an
+  inconvenience (re-download time), not data loss. Do not `mount` or
+  otherwise touch `/dev/sdc` from the host while the VM is running (see the
+  passthrough caution in `docs/03-vm-provisioning.md`) — concurrent access
+  can corrupt the guest filesystem.
 - **Maintenance Mode**: N/A — take the VM down directly
   (`virsh shutdown gtx1060-inference`) when maintenance is needed.
 - **Stateful Changes**: Any change to `<hostdev>`, `<disk>`, or firmware

@@ -8,6 +8,12 @@ This project follows semantic versioning.
 
 ### Added
 
+- A real inference workload: a persistent `ollama/ollama` container
+  (`--gpus all`, `--restart unless-stopped`) running `qwen2.5-coder:7b` on
+  the GTX 1060, 100% GPU-offloaded (~24 tokens/sec). Model storage lives at
+  `/srv/ai/ollama-models` on the dedicated passthrough disk rather than
+  Docker's default volume store. Documented in `docs/COMMAND_REFERENCE.md`.
+
 ### Changed
 
 ### Fixed
