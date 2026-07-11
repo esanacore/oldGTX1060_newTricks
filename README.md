@@ -1,5 +1,9 @@
 # GTX 1060 VFIO Passthrough Inference VM
 
+<!-- CONSTITUTION_START -->
+[![Eric's Engineering Constitution](https://img.shields.io/badge/Eric's%20Engineering%20Constitution-Adopted-blue)](https://github.com/esanacore/engineering-constitution)
+<!-- CONSTITUTION_END -->
+
 Documentation for turning a second, driver-incompatible GPU (GTX 1060) into a
 usable local-inference box, without touching the host's primary GPU (RTX 4080)
 or its driver branch.
@@ -40,6 +44,15 @@ containerized local LLM inference.
 - [`configs/`](configs/) — the actual config files/snippets referenced by the
   docs above (host modprobe.d, GRUB cmdline, fstab entry, ollama.service, the
   full libvirt domain XML).
+- [`docs/adr/0001-...`](docs/adr/0001-vfio-passthrough-vm-over-driver-downgrade.md) —
+  the architecture decision record for choosing VFIO passthrough over a
+  driver downgrade or host-level Docker.
+
+This repository follows [Eric's Engineering Constitution](https://github.com/esanacore/engineering-constitution)
+(see `constitution/`); `docs/SETUP.md`, `docs/OPERATIONS.md`,
+`docs/TROUBLESHOOTING.md`, and `docs/COMMAND_REFERENCE.md` are its
+governance-standard operational docs, layered on top of the narrative docs
+above.
 
 ## Quick reference: current end state
 
