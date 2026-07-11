@@ -97,6 +97,10 @@ What this setup can actually do today:
   opaque volume store. Reachable from Murderbot at
   `http://192.168.122.27:11434`. See `docs/COMMAND_REFERENCE.md`,
   "Inference Workload (Ollama)".
+- A chat UI (Open WebUI) runs alongside it at
+  `http://192.168.122.27:3000`, with a pinned dock launcher on Murderbot
+  (custom icon, opens as a chromeless app window) for one-click access. See
+  `docs/COMMAND_REFERENCE.md`, "Chat UI (Open WebUI)".
 - Automated drift detection for both the host config and the VM's libvirt
   domain definition (`scripts/check-host-config.sh`,
   `scripts/check-vm-config.sh`), plus a one-command end-to-end health check
@@ -173,6 +177,7 @@ above.
 | Running workload | `ollama/ollama` + `qwen2.5-coder:7b`, 100% GPU, ~24 tok/s |
 | Model storage | `/srv/ai/ollama-models` on the passthrough disk |
 | Inference endpoint | `http://192.168.122.27:11434` (Murderbot-only for now) |
+| Chat UI | `http://192.168.122.27:3000` (Open WebUI) + pinned dock launcher |
 | Verified via | `./scripts/verify-gpu-stack.sh` |
 
 ## Version

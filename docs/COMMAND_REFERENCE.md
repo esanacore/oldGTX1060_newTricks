@@ -92,6 +92,42 @@ curl -s http://localhost:11434/api/generate -d '{
   tunnel) is tracked in `TODO.md` rather than done by default, since it's a
   host firewall/NAT change.
 
+## Chat UI (Open WebUI)
+
+A persistent `ghcr.io/open-webui/open-webui` container runs on the guest,
+pointed at the local Ollama instance. Its own data (chat history, accounts)
+is bind-mounted to `/srv/ai/open-webui-data` — same rationale as the Ollama
+model storage: on the dedicated disk, not Docker's opaque volume store.
+
+```bash
+# Start (already running with --restart unless-stopped; only needed after
+# removing the container or rebuilding the VM):
+sudo docker run -d -p 3000:8080 \
+  --add-host=host.docker.internal:host-gateway \
+  -e OLLAMA_BASE_URL=http://host.docker.internal:11434 \
+  -v /srv/ai/open-webui-data:/app/backend/data \
+  --name open-webui --restart unless-stopped \
+  ghcr.io/open-webui/open-webui:main
+```
+
+Reachable from Murderbot at `http://192.168.122.27:3000`. First visit
+requires creating a local admin account (first signup becomes admin — no
+email/external verification, fully self-contained on the VM).
+
+### Dock Launcher
+
+A pinned dock icon on Murderbot opens Open WebUI in a chromeless Chrome app
+window:
+
+- Launcher: `~/.local/share/applications/art-inference.desktop`
+- Icon: `~/.local/share/icons/art-inference.svg` (custom, matches this
+  project's diagram palette)
+- Pinned via `gsettings set org.gnome.shell favorite-apps [...]`
+
+These live on the host desktop, not in this repository (they're
+machine-specific dotfiles, not VM/infra config) — recorded here so the setup
+is reproducible if the desktop environment is ever rebuilt.
+
 ## Host-Side Diagnostics
 
 ```bash
