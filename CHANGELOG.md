@@ -8,6 +8,18 @@ This project follows semantic versioning.
 
 ### Added
 
+### Changed
+
+### Fixed
+
+### Removed
+
+### Security
+
+## [1.1.0] - 2026-07-11
+
+### Added
+
 - A real inference workload: a persistent `ollama/ollama` container
   (`--gpus all`, `--restart unless-stopped`) running `qwen2.5-coder:7b` on
   the GTX 1060, 100% GPU-offloaded (~24 tokens/sec). Model storage lives at
@@ -16,8 +28,6 @@ This project follows semantic versioning.
 - A chat UI: `open-webui` container, data at `/srv/ai/open-webui-data`,
   plus a pinned Murderbot dock launcher (custom icon, chromeless Chrome app
   window) for one-click access. Documented in `docs/COMMAND_REFERENCE.md`.
-
-### Changed
 
 ### Fixed
 
@@ -28,10 +38,6 @@ This project follows semantic versioning.
   regardless of content. Fixed instance-wide by setting the default
   Function Calling mode to Legacy in Admin Panel → Settings. See
   `docs/TROUBLESHOOTING.md`.
-
-### Removed
-
-### Security
 
 ## [1.0.0] - 2026-07-10
 
@@ -67,4 +73,5 @@ This project follows semantic versioning.
   tracking, backup strategy, verification-script scheduling) rather than
   the original constitution-bootstrap placeholders.
 
+[1.1.0]: https://github.com/esanacore/gtx1060-vfio-inference-vm/releases/tag/v1.1.0
 [1.0.0]: https://github.com/esanacore/gtx1060-vfio-inference-vm/releases/tag/v1.0.0

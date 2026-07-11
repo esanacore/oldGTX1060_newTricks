@@ -182,5 +182,5 @@ above.
 
 ## Version
 
-Current version: 1.0.0 — see [`VERSION`](VERSION) and
+Current version: 1.1.0 — see [`VERSION`](VERSION) and
 [`CHANGELOG.md`](CHANGELOG.md).
