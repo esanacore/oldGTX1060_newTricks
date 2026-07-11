@@ -1,0 +1,4 @@
+# /etc/default/grub — relevant line only
+# Run `sudo update-grub` after editing.
+
+GRUB_CMDLINE_LINUX_DEFAULT="quiet splash intel_iommu=on iommu=pt"

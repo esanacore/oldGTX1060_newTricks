@@ -1,0 +1,15 @@
+[Unit]
+Description=Ollama Service
+After=network-online.target mnt-T9.mount
+RequiresMountsFor=/mnt/T9
+
+[Service]
+ExecStart=/usr/local/bin/ollama serve
+User=ollama
+Group=ollama
+Restart=always
+RestartSec=3
+Environment="PATH=/home/esanacore/.opencode/bin:/home/esanacore/.nvm/versions/node/v24.15.0/bin:/home/esanacore/.local/bin:/home/esanacore/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin:/snap/bin:/home/esanacore/.local/share/JetBrains/Toolbox/scripts:/home/esanacore/.lmstudio/bin:/home/esanacore/.lmstudio/bin"
+
+[Install]
+WantedBy=default.target

@@ -1,0 +1,4 @@
+# /etc/initramfs-tools/modules — appended line
+# Run `sudo update-initramfs -u -k all` after editing.
+
+vfio-pci

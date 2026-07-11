@@ -1,0 +1,5 @@
+# /etc/fstab — T9 external drive entry
+# nofail: don't block boot if the drive isn't present
+# x-systemd.automount: mount on first access instead of blocking startup
+
+UUID=6A7F-B8D3 /mnt/T9 exfat defaults,nofail,x-systemd.automount,uid=1000,gid=1000,umask=000 0 0
